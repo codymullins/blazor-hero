@@ -1,0 +1,322 @@
+<div class="results-screen">
+    <header class="results-header">
+        <h1>SONG COMPLETE!</h1>
+        @if (SongMeta != null)
+        {
+            <div class="song-info">
+                <span class="song-title">@SongMeta.Title</span>
+                <span class="song-artist">@SongMeta.Artist</span>
+            </div>
+        }
+    </header>
+
+    @if (Stats != null)
+    {
+        <div class="results-content">
+            <div class="grade-display">
+                <span class="grade @GetGradeClass()">@Stats.GetGrade()</span>
+                <div class="stars">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <span class="star @(i < Stats.StarRating ? "filled" : "")">★</span>
+                    }
+                </div>
+            </div>
+
+            <div class="score-section">
+                <div class="final-score">
+                    <span class="label">FINAL SCORE</span>
+                    <span class="value">@Stats.Score.ToString("N0")</span>
+                </div>
+                <div class="accuracy">
+                    <span class="label">ACCURACY</span>
+                    <span class="value">@Stats.Accuracy.ToString("F1")%</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat perfect">
+                    <span class="count">@Stats.PerfectCount</span>
+                    <span class="label">PERFECT</span>
+                </div>
+                <div class="stat great">
+                    <span class="count">@Stats.GreatCount</span>
+                    <span class="label">GREAT</span>
+                </div>
+                <div class="stat good">
+                    <span class="count">@Stats.GoodCount</span>
+                    <span class="label">GOOD</span>
+                </div>
+                <div class="stat miss">
+                    <span class="count">@Stats.MissCount</span>
+                    <span class="label">MISS</span>
+                </div>
+            </div>
+
+            <div class="combo-section">
+                <span class="label">MAX COMBO</span>
+                <span class="value">@Stats.MaxCombo</span>
+                @if (Stats.IsFullCombo)
+                {
+                    <span class="fc-badge">FULL COMBO!</span>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="results-actions">
+        <button class="action-btn restart" @onclick="OnRestartClick">
+            <span class="key-hint">R</span>
+            RESTART
+        </button>
+        <button class="action-btn back" @onclick="OnBackClick">
+            <span class="key-hint">ESC</span>
+            SONG SELECT
+        </button>
+    </div>
+</div>
+
+<style>
+    .results-screen {
+        width: 100%;
+        height: 100vh;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+
+    .results-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .results-header h1 {
+        color: #FFD700;
+        font-size: 2.5rem;
+        margin: 0 0 1rem 0;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .song-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .song-title {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+
+    .song-artist {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .results-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .grade-display {
+        text-align: center;
+    }
+
+    .grade {
+        font-size: 6rem;
+        font-weight: 900;
+        display: block;
+        line-height: 1;
+    }
+
+    .grade.s-plus { color: #FFD700; text-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+    .grade.s { color: #FFD700; }
+    .grade.a-plus, .grade.a { color: #22C55E; }
+    .grade.b-plus, .grade.b { color: #3B82F6; }
+    .grade.c { color: #EAB308; }
+    .grade.d { color: #F97316; }
+    .grade.f { color: #EF4444; }
+
+    .stars {
+        font-size: 2rem;
+        margin-top: 0.5rem;
+    }
+
+    .star {
+        color: rgba(255, 255, 255, 0.2);
+        margin: 0 0.2rem;
+    }
+
+    .star.filled {
+        color: #FFD700;
+    }
+
+    .score-section {
+        display: flex;
+        gap: 3rem;
+        text-align: center;
+    }
+
+    .final-score, .accuracy {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .final-score .value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .accuracy .value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #22C55E;
+    }
+
+    .label {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.8rem;
+        letter-spacing: 0.1em;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+    }
+
+    .stat .count {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+
+    .stat .label {
+        font-size: 0.7rem;
+    }
+
+    .stat.perfect .count { color: #FFD700; }
+    .stat.great .count { color: #22C55E; }
+    .stat.good .count { color: #3B82F6; }
+    .stat.miss .count { color: #EF4444; }
+
+    .combo-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .combo-section .value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    .fc-badge {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        color: black;
+        padding: 0.3rem 0.8rem;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .results-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .action-btn {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .action-btn.restart {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        color: black;
+        animation: restart-pulse 2s ease-in-out infinite;
+    }
+
+    .action-btn.restart:hover {
+        animation: none;
+    }
+
+    .action-btn.back {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .key-hint {
+        display: inline-block;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+        font-family: monospace;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
+
+    @@keyframes restart-pulse {
+        0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public PlayerStats? Stats { get; set; }
+
+    [Parameter]
+    public SongMeta? SongMeta { get; set; }
+
+    [Parameter]
+    public EventCallback OnRestart { get; set; }
+
+    [Parameter]
+    public EventCallback OnBack { get; set; }
+
+    private string GetGradeClass()
+    {
+        if (Stats == null) return "";
+        var grade = Stats.GetGrade().ToLower().Replace("+", "-plus");
+        return grade;
+    }
+
+    private async Task OnRestartClick()
+    {
+        await OnRestart.InvokeAsync();
+    }
+
+    private async Task OnBackClick()
+    {
+        await OnBack.InvokeAsync();
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "songs": [
+    { "chartFile": "tutorial.json" },
+    { "chartFile": "neon-pulse.json" },
+    { "chartFile": "blazing-rhythm.json" }
+  ]
+}

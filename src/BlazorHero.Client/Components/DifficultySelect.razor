@@ -1,0 +1,287 @@
+@inject ChartService Charts
+
+<div class="difficulty-select">
+    <header class="screen-header">
+        <button class="back-btn" @onclick="OnBackClick">
+            <span class="key-hint">ESC</span> Back
+        </button>
+        <h2>SELECT DIFFICULTY</h2>
+        <div class="nav-hint">
+            <span class="key">↑</span><span class="key">↓</span> Navigate
+            <span class="key">ENTER</span> Play
+        </div>
+    </header>
+
+    @if (_chart != null)
+    {
+        <div class="song-preview">
+            <h3>@_chart.Meta.Title</h3>
+            <p>@_chart.Meta.Artist</p>
+        </div>
+
+        <div class="difficulty-options">
+            @foreach (var diff in _availableDifficulties)
+            {
+                <button class="diff-btn @diff.ToString().ToLower() @(_selectedDifficulty == diff ? "selected" : "")"
+                        @onclick="() => SelectDifficulty(diff)">
+                    <span class="diff-name">@diff</span>
+                    <span class="diff-notes">@GetNoteCount(diff) notes</span>
+                    @if (_selectedDifficulty == diff)
+                    {
+                        <span class="key-hint">ENTER</span>
+                    }
+                </button>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .difficulty-select {
+        width: 100%;
+        height: 100vh;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+    }
+
+    .screen-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .screen-header h2 {
+        flex: 1;
+        text-align: center;
+        color: #FFD700;
+        font-size: 2rem;
+        margin: 0;
+    }
+
+    .back-btn, .nav-hint {
+        min-width: 150px;
+    }
+
+    .back-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.85rem;
+        justify-content: flex-end;
+    }
+
+    .key {
+        display: inline-block;
+        padding: 0.15rem 0.4rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.75rem;
+    }
+
+    .key-hint {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
+        font-family: monospace;
+        margin-left: auto;
+    }
+
+    .song-preview {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .song-preview h3 {
+        color: white;
+        font-size: 1.8rem;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .song-preview p {
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0;
+    }
+
+    .difficulty-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .diff-btn {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: white;
+        position: relative;
+    }
+
+    .diff-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    .diff-btn.selected {
+        transform: scale(1.05) translateX(10px);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+        outline: 3px solid white;
+        outline-offset: 2px;
+    }
+
+    .diff-btn.selected::before {
+        content: '▶';
+        position: absolute;
+        left: -28px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+        font-size: 1.2rem;
+        animation: pulse-arrow 1s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-arrow {
+        0%, 100% { opacity: 1; transform: translateY(-50%) translateX(0); }
+        50% { opacity: 0.7; transform: translateY(-50%) translateX(3px); }
+    }
+
+    .diff-btn.easy {
+        background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    }
+
+    .diff-btn.medium {
+        background: linear-gradient(135deg, #EAB308 0%, #CA8A04 100%);
+        color: black;
+    }
+
+    .diff-btn.hard {
+        background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+    }
+
+    .diff-btn.expert {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    }
+
+    .diff-name {
+        text-transform: uppercase;
+    }
+
+    .diff-notes {
+        font-size: 0.9rem;
+        font-weight: normal;
+        opacity: 0.8;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string? ChartFile { get; set; }
+
+    [Parameter]
+    public EventCallback<Difficulty> OnDifficultySelected { get; set; }
+
+    [Parameter]
+    public EventCallback OnBack { get; set; }
+
+    private Chart? _chart;
+    private List<Difficulty> _availableDifficulties = new();
+    private Difficulty? _selectedDifficulty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ChartFile))
+        {
+            _chart = await Charts.LoadChartAsync(ChartFile);
+            _availableDifficulties = _chart?.GetAvailableDifficulties() ?? new List<Difficulty>();
+            // Auto-select first difficulty
+            if (_availableDifficulties.Count > 0)
+            {
+                _selectedDifficulty = _availableDifficulties[0];
+            }
+        }
+    }
+
+    private int GetNoteCount(Difficulty difficulty)
+    {
+        var track = _chart?.GetTrack(difficulty);
+        return track?.Notes.Count ?? 0;
+    }
+
+    private async Task SelectDifficulty(Difficulty difficulty)
+    {
+        await OnDifficultySelected.InvokeAsync(difficulty);
+    }
+
+    private async Task OnBackClick()
+    {
+        await OnBack.InvokeAsync();
+    }
+
+    public async Task HandleKeyAsync(string key)
+    {
+        if (_availableDifficulties.Count == 0) return;
+
+        int currentIndex = _selectedDifficulty.HasValue 
+            ? _availableDifficulties.IndexOf(_selectedDifficulty.Value) 
+            : -1;
+
+        switch (key)
+        {
+            case "up":
+                if (currentIndex > 0)
+                {
+                    _selectedDifficulty = _availableDifficulties[currentIndex - 1];
+                    StateHasChanged();
+                }
+                break;
+
+            case "down":
+                if (currentIndex < _availableDifficulties.Count - 1)
+                {
+                    _selectedDifficulty = _availableDifficulties[currentIndex + 1];
+                    StateHasChanged();
+                }
+                break;
+
+            case "confirm":
+                if (_selectedDifficulty.HasValue)
+                {
+                    await SelectDifficulty(_selectedDifficulty.Value);
+                }
+                break;
+        }
+    }
+}

@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "title": "Tutorial",
+    "artist": "Blazor Hero",
+    "album": "Getting Started",
+    "charter": "Auto-generated",
+    "audioFile": "audio/songs/tutorial.mp3",
+    "coverImage": null,
+    "previewStart": 0,
+    "previewEnd": 10000,
+    "bpm": 100,
+    "offset": 0
+  },
+  "noteSounds": {
+    "style": "soft_synth",
+    "lanes": [
+      { "freq": 130.81, "name": "C3" },
+      { "freq": 196.00, "name": "G3" },
+      { "freq": 220.00, "name": "A3" },
+      { "freq": 174.61, "name": "F3" }
+    ],
+    "brightness": 0.8,
+    "attack": 0.02,
+    "sustain": 0.6
+  },
+  "syncTrack": [
+    { "time": 0, "bpm": 100, "timeSignature": [4, 4] }
+  ],
+  "difficulties": {
+    "easy": {
+      "notes": [
+        { "time": 2000, "lane": 0 },
+        { "time": 3200, "lane": 1 },
+        { "time": 4400, "lane": 0 },
+        { "time": 5600, "lane": 1 },
+        { "time": 6800, "lane": 0 },
+        { "time": 8000, "lane": 1 },
+        { "time": 9200, "lane": 0 },
+        { "time": 10400, "lane": 1 },
+        { "time": 11600, "lane": 0 },
+        { "time": 12800, "lane": 1 },
+        { "time": 14000, "lane": 0, "duration": 1500 },
+        { "time": 16500, "lane": 1, "duration": 1500 },
+        { "time": 19000, "lane": 0, "isStarPower": true },
+        { "time": 20200, "lane": 1, "isStarPower": true },
+        { "time": 21400, "lane": 0, "isStarPower": true },
+        { "time": 22600, "lane": 1, "isStarPower": true }
+      ],
+      "starPowerPhrases": [
+        { "startTime": 19000, "endTime": 23100 }
+      ]
+    },
+    "medium": {
+      "notes": [
+        { "time": 2000, "lane": 0 },
+        { "time": 2600, "lane": 1 },
+        { "time": 3200, "lane": 2 },
+        { "time": 3800, "lane": 1 },
+        { "time": 4400, "lane": 0 },
+        { "time": 5000, "lane": 2 },
+        { "time": 5600, "lane": 1 },
+        { "time": 6200, "lane": 0 },
+        { "time": 6800, "lane": 2 },
+        { "time": 7400, "lane": 1 },
+        { "time": 8000, "lane": 0 },
+        { "time": 8600, "lane": 2 },
+        { "time": 9200, "lane": 1 },
+        { "time": 9800, "lane": 0 },
+        { "time": 10400, "lane": 2 },
+        { "time": 11000, "lane": 1 },
+        { "time": 11600, "lane": 0, "duration": 900 },
+        { "time": 13100, "lane": 2, "duration": 900 },
+        { "time": 14600, "lane": 1, "duration": 900 },
+        { "time": 16400, "lane": 0, "isStarPower": true },
+        { "time": 17000, "lane": 1, "isStarPower": true },
+        { "time": 17600, "lane": 2, "isStarPower": true },
+        { "time": 18200, "lane": 1, "isStarPower": true },
+        { "time": 18800, "lane": 0, "isStarPower": true },
+        { "time": 19400, "lane": 2, "isStarPower": true }
+      ],
+      "starPowerPhrases": [
+        { "startTime": 16400, "endTime": 19900 }
+      ]
+    },
+    "hard": {
+      "notes": [
+        { "time": 2000, "lane": 0 },
+        { "time": 2400, "lane": 1 },
+        { "time": 2800, "lane": 2 },
+        { "time": 3200, "lane": 3 },
+        { "time": 3600, "lane": 2 },
+        { "time": 4000, "lane": 1 },
+        { "time": 4400, "lane": 0 },
+        { "time": 4800, "lane": 1 },
+        { "time": 5200, "lane": 2 },
+        { "time": 5600, "lane": 3 },
+        { "time": 6000, "lane": 2 },
+        { "time": 6400, "lane": 1 },
+        { "time": 6800, "lane": 0 },
+        { "time": 7200, "lane": 3 },
+        { "time": 7600, "lane": 1 },
+        { "time": 8000, "lane": 2 },
+        { "time": 8400, "lane": 0 },
+        { "time": 8800, "lane": 1 },
+        { "time": 9200, "lane": 2 },
+        { "time": 9600, "lane": 3 },
+        { "time": 10000, "lane": 0, "duration": 600 },
+        { "time": 10900, "lane": 3, "duration": 600 },
+        { "time": 11800, "lane": 1 },
+        { "time": 12200, "lane": 2 },
+        { "time": 12600, "lane": 1 },
+        { "time": 13000, "lane": 2 },
+        { "time": 13400, "lane": 0 },
+        { "time": 13800, "lane": 3 },
+        { "time": 14200, "lane": 0, "isStarPower": true },
+        { "time": 14600, "lane": 1, "isStarPower": true },
+        { "time": 15000, "lane": 2, "isStarPower": true },
+        { "time": 15400, "lane": 3, "isStarPower": true },
+        { "time": 15800, "lane": 2, "isStarPower": true },
+        { "time": 16200, "lane": 1, "isStarPower": true },
+        { "time": 16600, "lane": 0, "isStarPower": true },
+        { "time": 17000, "lane": 3, "isStarPower": true }
+      ],
+      "starPowerPhrases": [
+        { "startTime": 14200, "endTime": 17400 }
+      ]
+    },
+    "expert": {
+      "notes": [
+        { "time": 2000, "lane": 0 },
+        { "time": 2300, "lane": 1 },
+        { "time": 2600, "lane": 2 },
+        { "time": 2900, "lane": 3 },
+        { "time": 3200, "lane": 2 },
+        { "time": 3500, "lane": 1 },
+        { "time": 3800, "lane": 0 },
+        { "time": 4100, "lane": 1 },
+        { "time": 4400, "lane": 2 },
+        { "time": 4700, "lane": 3 },
+        { "time": 5000, "lane": 2 },
+        { "time": 5300, "lane": 1 },
+        { "time": 5600, "lane": 0 },
+        { "time": 5600, "lane": 1 },
+        { "time": 6200, "lane": 2 },
+        { "time": 6200, "lane": 3 },
+        { "time": 6800, "lane": 0 },
+        { "time": 7100, "lane": 1 },
+        { "time": 7400, "lane": 2 },
+        { "time": 7700, "lane": 3 },
+        { "time": 8000, "lane": 0 },
+        { "time": 8000, "lane": 3 },
+        { "time": 8600, "lane": 1 },
+        { "time": 8600, "lane": 2 },
+        { "time": 9200, "lane": 0 },
+        { "time": 9500, "lane": 1 },
+        { "time": 9800, "lane": 2 },
+        { "time": 10100, "lane": 3 },
+        { "time": 10400, "lane": 2 },
+        { "time": 10700, "lane": 1 },
+        { "time": 11000, "lane": 0 },
+        { "time": 11300, "lane": 1 },
+        { "time": 11600, "lane": 2, "duration": 450 },
+        { "time": 12350, "lane": 1, "duration": 450 },
+        { "time": 13100, "lane": 0, "duration": 450 },
+        { "time": 13850, "lane": 3, "duration": 450 },
+        { "time": 14600, "lane": 0, "isStarPower": true },
+        { "time": 14900, "lane": 1, "isStarPower": true },
+        { "time": 15200, "lane": 2, "isStarPower": true },
+        { "time": 15500, "lane": 3, "isStarPower": true },
+        { "time": 15800, "lane": 2, "isStarPower": true },
+        { "time": 16100, "lane": 1, "isStarPower": true },
+        { "time": 16400, "lane": 0, "isStarPower": true },
+        { "time": 16400, "lane": 3, "isStarPower": true },
+        { "time": 17000, "lane": 1, "isStarPower": true },
+        { "time": 17000, "lane": 2, "isStarPower": true },
+        { "time": 17600, "lane": 0, "isStarPower": true },
+        { "time": 17900, "lane": 1, "isStarPower": true }
+      ],
+      "starPowerPhrases": [
+        { "startTime": 14600, "endTime": 18200 }
+      ]
+    }
+  }
+}

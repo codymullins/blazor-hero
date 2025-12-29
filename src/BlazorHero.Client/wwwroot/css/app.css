@@ -1,0 +1,153 @@
+/* Blazor Hero - Main Styles */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0f;
+    color: white;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-app {
+    width: 100%;
+    height: 100%;
+    outline: none;
+}
+
+/* Loading Screen */
+.loading-screen {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+}
+
+.loading-content {
+    text-align: center;
+}
+
+.loading-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    margin-bottom: 2rem;
+    letter-spacing: 0.1em;
+}
+
+.loading-progress {
+    width: 80px;
+    height: 80px;
+    display: block;
+    margin: 0 auto 1rem;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke-width: 3px;
+}
+
+.loading-progress circle:first-child {
+    stroke: rgba(255, 255, 255, 0.1);
+}
+
+.loading-progress circle:last-child {
+    stroke: #FFD700;
+    stroke-linecap: round;
+    transform-origin: center;
+    animation: loading-spin 1.2s linear infinite;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 60;
+}
+
+@keyframes loading-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-progress-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.loading-progress-text:after {
+    content: "Loading...";
+}
+
+/* Error UI */
+#blazor-error-ui {
+    background: #dc3545;
+    color: white;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    text-align: center;
+    display: none;
+    z-index: 9999;
+}
+
+#blazor-error-ui .reload {
+    color: white;
+    margin-left: 1rem;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    margin-left: 1rem;
+}
+
+.blazor-error-boundary {
+    background: #b32121;
+    padding: 1rem;
+    color: white;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Button resets */
+button {
+    font-family: inherit;
+}
+
+/* Canvas container */
+canvas {
+    display: block;
+}
