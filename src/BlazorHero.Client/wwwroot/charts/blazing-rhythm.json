@@ -56,10 +56,10 @@
         { "time": 1714, "lane": 0 },
         { "time": 2143, "lane": 1 },
         { "time": 2571, "lane": 2 },
-        { "time": 3000, "lane": 1 },
-        { "time": 3429, "lane": 0 },
-        { "time": 3857, "lane": 2 },
-        { "time": 4286, "lane": 1 },
+        { "time": 3000, "lane": 1, "isStarPower": true },
+        { "time": 3429, "lane": 0, "isStarPower": true },
+        { "time": 3857, "lane": 2, "isStarPower": true },
+        { "time": 4286, "lane": 1, "isStarPower": true },
         { "time": 4714, "lane": 0 },
         { "time": 5143, "lane": 2 },
         { "time": 5571, "lane": 1 },
@@ -85,6 +85,7 @@
         { "time": 16500, "lane": 0, "isStarPower": true }
       ],
       "starPowerPhrases": [
+        { "startTime": 3000, "endTime": 4700 },
         { "startTime": 13500, "endTime": 16929 }
       ]
     },
@@ -92,11 +93,11 @@
       "notes": [
         { "time": 1714, "lane": 0 },
         { "time": 1929, "lane": 1 },
-        { "time": 2143, "lane": 2 },
-        { "time": 2357, "lane": 3 },
-        { "time": 2571, "lane": 2 },
-        { "time": 2786, "lane": 1 },
-        { "time": 3000, "lane": 0 },
+        { "time": 2143, "lane": 2, "isStarPower": true },
+        { "time": 2357, "lane": 3, "isStarPower": true },
+        { "time": 2571, "lane": 2, "isStarPower": true },
+        { "time": 2786, "lane": 1, "isStarPower": true },
+        { "time": 3000, "lane": 0, "isStarPower": true },
         { "time": 3214, "lane": 1 },
         { "time": 3429, "lane": 2 },
         { "time": 3643, "lane": 3 },
@@ -134,6 +135,7 @@
         { "time": 11357, "lane": 1, "isStarPower": true }
       ],
       "starPowerPhrases": [
+        { "startTime": 2143, "endTime": 3200 },
         { "startTime": 9429, "endTime": 11786 }
       ]
     },
@@ -141,11 +143,11 @@
       "notes": [
         { "time": 1714, "lane": 0 },
         { "time": 1821, "lane": 1 },
-        { "time": 1929, "lane": 2 },
-        { "time": 2036, "lane": 3 },
-        { "time": 2143, "lane": 2 },
-        { "time": 2250, "lane": 1 },
-        { "time": 2357, "lane": 0 },
+        { "time": 1929, "lane": 2, "isStarPower": true },
+        { "time": 2036, "lane": 3, "isStarPower": true },
+        { "time": 2143, "lane": 2, "isStarPower": true },
+        { "time": 2250, "lane": 1, "isStarPower": true },
+        { "time": 2357, "lane": 0, "isStarPower": true },
         { "time": 2464, "lane": 1 },
         { "time": 2571, "lane": 2 },
         { "time": 2679, "lane": 3 },
@@ -211,6 +213,7 @@
         { "time": 10821, "lane": 3, "isStarPower": true }
       ],
       "starPowerPhrases": [
+        { "startTime": 1929, "endTime": 2500 },
         { "startTime": 9000, "endTime": 11250 }
       ]
     }
