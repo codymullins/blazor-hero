@@ -1,13 +1,20 @@
 @using System.Linq
-@inject GameEngine Engine
+@using SkiaSharp
+@using SkiaSharp.Views.Blazor
+@using BlazorHero.Client.Core
+@using BlazorHero.Client.Rendering
+@using BlazorHero.Client.Services
+@inject SkiaGameEngine Engine
 @inject GameState State
-@inject DeviceService Device
 @inject InputService Input
+@inject DeviceService Device
 @implements IAsyncDisposable
 
-<div class="game-screen @_mobileClass @_orientationClass">
+<div class="game-screen @(_isMobile ? "mobile" : "")">
     <div class="game-container">
-        <BECanvas @key="@("game-canvas")" @ref="_canvasRef" Width="@_width" Height="@_height"></BECanvas>
+        <SKCanvasView @ref="_canvasRef"
+                      OnPaintSurface="OnPaintSurface"
+                      IgnorePixelScaling="true" />
     </div>
 
     <div class="hud">
@@ -40,23 +47,20 @@
         </div>
     </div>
 
-    @if (!_isMobile)
-    {
-        <div class="star-power-container @(Engine.IsStarPowerActive ? "active" : "")">
-            <div class="star-power-bar">
-                <div class="star-power-fill @(Engine.IsStarPowerActive ? "active" : "")"
-                     style="width: @(Engine.StarPowerMeter * 100)%"></div>
-            </div>
-            @if (Engine.IsStarPowerActive)
-            {
-                <span class="star-power-active-label">2X MULTIPLIER + COMBO SHIELD</span>
-            }
-            else if (Engine.StarPowerMeter >= 0.5)
-            {
-                <span class="star-power-ready">PRESS SPACE!</span>
-            }
+    <div class="star-power-container @(Engine.IsStarPowerActive ? "active" : "")">
+        <div class="star-power-bar">
+            <div class="star-power-fill @(Engine.IsStarPowerActive ? "active" : "")"
+                 style="width: @(Engine.StarPowerMeter * 100)%"></div>
         </div>
-    }
+        @if (Engine.IsStarPowerActive)
+        {
+            <span class="star-power-active-label">2X MULTIPLIER + COMBO SHIELD</span>
+        }
+        else if (Engine.StarPowerMeter >= 0.5)
+        {
+            <span class="star-power-ready">PRESS SPACE!</span>
+        }
+    </div>
 
     @if (State.Current == GameStateType.Paused)
     {
@@ -70,13 +74,12 @@
         </div>
     }
 
-    @* Touch controls for mobile *@
+    @* Touch controls overlay for mobile *@
     @if (_isMobile)
     {
         <TouchControls
             LaneCount="@Engine.LaneCount"
             LaneBoundaries="@_laneBoundaries"
-            LaneBoundariesTop="@_laneBoundariesTop"
             ShowStarPower="true"
             StarPowerReady="@(Engine.StarPowerMeter >= 0.5 && !Engine.IsStarPowerActive)"
             StarPowerActive="@Engine.IsStarPowerActive" />
@@ -93,19 +96,6 @@
         overflow: hidden;
     }
 
-    /* Mobile uses full height - touch controls are transparent overlay */
-    .game-screen.mobile {
-        height: 100dvh;
-    }
-
-    .game-screen.mobile.portrait {
-        height: 100dvh;
-    }
-
-    .game-screen.mobile.landscape {
-        height: 100dvh;
-    }
-
     .game-container {
         width: 100%;
         height: 100%;
@@ -114,16 +104,15 @@
         justify-content: center;
     }
 
-    .game-container canvas {
+    .game-container :deep(canvas) {
         max-width: 100%;
         max-height: 100%;
     }
 
-    /* Mobile - scale canvas to fill as much space as possible while maintaining aspect ratio */
-    .game-screen.mobile .game-container canvas {
+    /* In mobile portrait, ensure canvas fills the screen */
+    .game-screen.mobile .game-container :deep(canvas) {
         width: 100%;
         height: 100%;
-        object-fit: contain;
     }
 
     .hud {
@@ -301,7 +290,6 @@
         align-items: center;
         justify-content: center;
         gap: 2rem;
-        z-index: 100;
     }
 
     .pause-menu h2 {
@@ -326,11 +314,9 @@
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s;
-        min-width: 200px;
     }
 
-    .pause-options button:hover,
-    .pause-options button:active {
+    .pause-options button:hover {
         background: rgba(255, 255, 255, 0.2);
         border-color: white;
     }
@@ -349,89 +335,28 @@
         from { text-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
         to { text-shadow: 0 0 20px rgba(96, 165, 250, 1); }
     }
-
-    /* Mobile-specific HUD adjustments */
-    .game-screen.mobile .hud {
-        padding: 0.5rem 1rem;
-    }
-
-    .game-screen.mobile .score-label {
-        font-size: 0.65rem;
-    }
-
-    .game-screen.mobile .score-value {
-        font-size: 1.4rem;
-    }
-
-    .game-screen.mobile .song-title {
-        font-size: 0.9rem;
-    }
-
-    .game-screen.mobile .song-artist {
-        font-size: 0.75rem;
-    }
-
-    .game-screen.mobile .combo-value {
-        font-size: 1.8rem;
-    }
-
-    .game-screen.mobile .combo-label {
-        font-size: 0.6rem;
-    }
-
-    .game-screen.mobile .multiplier-value {
-        font-size: 1.2rem;
-    }
-
-    .game-screen.mobile .pause-menu h2 {
-        font-size: 2rem;
-    }
-
-    .game-screen.mobile .pause-options button {
-        padding: 0.8rem 2rem;
-        font-size: 1rem;
-        min-width: 160px;
-    }
-
-    /* Hide song info on very small screens */
-    .game-screen.mobile.portrait .hud-center {
-        display: none;
-    }
 </style>
 
 @code {
-    private BECanvasComponent? _canvasRef;
-    private Canvas2DContext? _ctx;
-
-    private long _width = 1280;
-    private long _height = 720;
+    private SKCanvasView? _canvasRef;
     private bool _isInitialized;
-    private bool _isPortrait;
-
-    // Cache mobile state to avoid repeated checks in template
+    private double _lastRenderTime;
     private bool _isMobile;
-    private string _mobileClass = "";
-    private string _orientationClass = "";
+    private bool _loggedFirstRender;
 
-    // Lane boundaries for touch detection (X positions at hit line and top of overlay)
+    // Canvas dimensions - set dynamically on first render
+    private double _canvasWidth = 1280;
+    private double _canvasHeight = 720;
+
+    // Lane boundaries for touch detection (X positions)
     private double[] _laneBoundaries = Array.Empty<double>();
-    private double[] _laneBoundariesTop = Array.Empty<double>();
 
     protected override void OnInitialized()
     {
-        Console.WriteLine("[GameScreen] OnInitialized");
-        
-        // Set mobile state once at initialization
         _isMobile = Device.IsInitialized && Device.IsMobile;
-        
-        if (_isMobile)
-        {
-            _mobileClass = "mobile";
-            _orientationClass = Device.IsPortrait ? "portrait" : "landscape";
-        }
-        
-        // Subscribe to engine state changes to update HUD
+
         Engine.StateChanged += OnEngineStateChanged;
+        Engine.RenderRequested += OnRenderRequested;
     }
 
     private void OnEngineStateChanged()
@@ -439,34 +364,17 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnRenderRequested()
+    {
+        _canvasRef?.Invalidate();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Console.WriteLine($"[GameScreen] OnAfterRenderAsync firstRender={firstRender}, _isInitialized={_isInitialized}");
-        
-        if (firstRender && _canvasRef != null)
+        if (firstRender)
         {
-            Console.WriteLine("[GameScreen] First render - initializing canvas");
-
-            // Set canvas dimensions based on device orientation
+            // Re-check mobile state now that Device should be initialized
             _isMobile = Device.IsInitialized && Device.IsMobile;
-            _isPortrait = Device.IsInitialized && Device.IsPortrait;
-
-            Console.WriteLine($"[GameScreen] Device: IsMobile={_isMobile}, IsPortrait={_isPortrait}, Viewport={Device.ViewportWidth}x{Device.ViewportHeight}");
-
-            if (_isMobile && _isPortrait)
-            {
-                // Mobile portrait: use full viewport - touch controls are transparent overlay
-                _width = Device.ViewportWidth;
-                _height = Device.ViewportHeight;
-                Console.WriteLine($"[GameScreen] PORTRAIT mode: {_width}x{_height}");
-            }
-            else
-            {
-                // Desktop/landscape: standard 16:9
-                _width = 1280;
-                _height = 720;
-                Console.WriteLine($"[GameScreen] LANDSCAPE mode: {_width}x{_height}");
-            }
 
             // Initialize touch input on mobile
             if (_isMobile)
@@ -477,18 +385,32 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[GameScreen] Touch init failed: {ex.Message}");
-                    // Continue anyway - touch is optional
+                    Console.WriteLine($"[SkiaGameScreen] Touch init failed: {ex.Message}");
                 }
             }
 
-            _ctx = await _canvasRef.CreateCanvas2DAsync();
-            Console.WriteLine($"[GameScreen] Canvas context created: {_ctx != null}");
+            // Set canvas dimensions based on device
+            Console.WriteLine($"[SkiaGameScreen] Device.IsInitialized={Device.IsInitialized}, IsMobile={Device.IsMobile}, IsPortrait={Device.IsPortrait}");
+            Console.WriteLine($"[SkiaGameScreen] Viewport: {Device.ViewportWidth}x{Device.ViewportHeight}");
 
-            // Bind the new canvas context to the engine (synchronous, no lock)
-            Console.WriteLine($"[GameScreen] Calling BindCanvas with {_width}x{_height}");
-            Engine.BindCanvas(_ctx, _width, _height);
-            Console.WriteLine("[GameScreen] Canvas bound to engine");
+            if (Device.IsInitialized && Device.IsMobile && Device.IsPortrait)
+            {
+                // Mobile portrait: use full viewport for highway (touch overlay is transparent)
+                _canvasWidth = Device.ViewportWidth;
+                _canvasHeight = Device.ViewportHeight;
+                Console.WriteLine($"[SkiaGameScreen] Using PORTRAIT mode: {_canvasWidth}x{_canvasHeight}");
+            }
+            else
+            {
+                // Desktop/landscape: standard 16:9
+                _canvasWidth = 1280;
+                _canvasHeight = 720;
+                Console.WriteLine($"[SkiaGameScreen] Using LANDSCAPE mode: {_canvasWidth}x{_canvasHeight}");
+            }
+
+            // Initialize the engine with canvas dimensions
+            Console.WriteLine($"[SkiaGameScreen] Calling Engine.Initialize({_canvasWidth}, {_canvasHeight})");
+            Engine.Initialize(_canvasWidth, _canvasHeight);
 
             // Calculate lane boundaries for touch detection
             if (_isMobile)
@@ -499,61 +421,83 @@
                 StateHasChanged();
             }
 
-            // Start game loop (engine handles idempotency)
+            // Start the game loop
             await Engine.StartGameLoopAsync();
-            Console.WriteLine("[GameScreen] Game loop started");
 
             _isInitialized = true;
+
+            // Request initial render
+            _canvasRef?.Invalidate();
         }
     }
 
-    /// <summary>
-    /// Calculate lane boundaries from the camera projection for touch detection.
-    /// Game always uses 5-lane layout, lanes are 0.4 wide in normalized space.
-    /// Calculates boundaries at both hit line (bottom) and top of touch overlay.
-    /// </summary>
-    private void CalculateLaneBoundaries()
+    private void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var camera = Engine.Camera;
-        int laneCount = Engine.LaneCount;
+        var canvas = e.Surface.Canvas;
+        var info = e.Info;
 
-        // Lane boundaries: for N lanes, we need N+1 boundary positions
-        // Each lane is 0.4 wide, starting from -1.0
-        _laneBoundaries = new double[laneCount + 1];
-        _laneBoundariesTop = new double[laneCount + 1];
-
-        // Touch overlay covers bottom 45% of screen
-        // Calculate what normalizedZ corresponds to the top of the overlay
-        // The overlay top Y = (1 - 0.45) * canvasHeight = 0.55 * canvasHeight
-        double overlayTopY = 0.55 * _height;
-
-        // From projection: y = HitLineY - (HitLineY - HorizonY) * perspectiveZ
-        // Solve for perspectiveZ: perspectiveZ = (HitLineY - y) / (HitLineY - HorizonY)
-        double perspectiveZ = (camera.HitLineY - overlayTopY) / (camera.HitLineY - camera.HorizonY);
-        perspectiveZ = Math.Clamp(perspectiveZ, 0, 1);
-
-        // perspectiveZ = normalizedZ^0.9, so normalizedZ = perspectiveZ^(1/0.9)
-        double topNormalizedZ = Math.Pow(perspectiveZ, 1.0 / 0.9);
-        topNormalizedZ = Math.Clamp(topNormalizedZ, 0, 1);
-
-        Console.WriteLine($"[GameScreen] Overlay top Y={overlayTopY:F0}, perspectiveZ={perspectiveZ:F3}, topNormalizedZ={topNormalizedZ:F3}");
-
-        for (int i = 0; i <= laneCount; i++)
+        // Log first render
+        if (!_loggedFirstRender && _isInitialized)
         {
-            // Each lane is 0.4 wide, starting from -1.0
-            double normalizedEdge = -1.0 + (i * 0.4);
-
-            // Project to screen coordinates at hit line (bottom of overlay)
-            var (bottomX, _, _) = camera.Project(normalizedEdge, 0);
-            _laneBoundaries[i] = bottomX;
-
-            // Project to screen coordinates at top of overlay
-            var (topX, _, _) = camera.Project(normalizedEdge, topNormalizedZ);
-            _laneBoundariesTop[i] = topX;
+            _loggedFirstRender = true;
+            Console.WriteLine($"[OnPaintSurface] First render - Skia info: {info.Width}x{info.Height}");
+            Console.WriteLine($"[OnPaintSurface] Configured canvas: {_canvasWidth}x{_canvasHeight}");
+            Console.WriteLine($"[OnPaintSurface] Engine.Projection: HighwayWidth={Engine.Projection.HighwayWidth}, HorizonY={Engine.Projection.HorizonY}, HitLineY={Engine.Projection.HitLineY}");
         }
 
-        Console.WriteLine($"[GameScreen] Lane boundaries bottom: [{string.Join(", ", _laneBoundaries.Select(b => b.ToString("F0")))}]");
-        Console.WriteLine($"[GameScreen] Lane boundaries top: [{string.Join(", ", _laneBoundariesTop.Select(b => b.ToString("F0")))}]");
+        // Calculate delta time
+        double now = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+        double deltaMs = _lastRenderTime > 0 ? now - _lastRenderTime : 16.67;
+        _lastRenderTime = now;
+
+        // Clear canvas with dark background
+        canvas.Clear(SKColor.Parse("#0a0a0f"));
+
+        if (!_isInitialized) return;
+
+        // Create game context and render
+        using var ctx = new SkiaGameContext(canvas, info.Width, info.Height, Engine.Projection);
+
+        // Let the engine render the frame
+        Engine.RenderFrame(ctx, deltaMs);
+
+        // Render countdown overlay if needed
+        if (State.Current == GameStateType.Countdown && Engine.CountdownTime > 0)
+        {
+            RenderCountdown(ctx, canvas);
+        }
+    }
+
+    private void RenderCountdown(IGameRenderContext ctx, SKCanvas canvas)
+    {
+        int countdownNumber = (int)Math.Ceiling(Engine.CountdownTime / 1000);
+        if (countdownNumber <= 0) return;
+
+        float centerX = (float)(ctx.Width / 2);
+        float centerY = (float)(ctx.Height / 2);
+
+        // Semi-transparent overlay
+        using var overlayPaint = new SKPaint
+        {
+            Color = new SKColor(0, 0, 0, 128),
+            Style = SKPaintStyle.Fill
+        };
+        canvas.DrawRect(0, 0, (float)ctx.Width, (float)ctx.Height, overlayPaint);
+
+        // Countdown number
+        using var textPaint = new SKPaint
+        {
+            Color = SKColor.Parse("#FFD700"),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        using var font = new SKFont(SKTypeface.Default, 120);
+
+        // Measure text to center it
+        var text = countdownNumber.ToString();
+        float textWidth = font.MeasureText(text, textPaint);
+
+        canvas.DrawText(text, centerX - textWidth / 2, centerY + 40, font, textPaint);
     }
 
     private async Task ResumeGame()
@@ -571,22 +515,41 @@
         await Engine.QuitToMenu();
     }
 
+    /// <summary>
+    /// Calculate lane boundaries from the projection for touch detection.
+    /// Game always uses 5-lane layout, lanes are 0.4 wide in normalized space.
+    /// </summary>
+    private void CalculateLaneBoundaries()
+    {
+        var projection = Engine.Projection;
+        int laneCount = Engine.LaneCount;
+
+        // Always use 5-lane layout (game standard), each lane is 0.4 wide
+        // Lane edges at: -1.0, -0.6, -0.2, 0.2, 0.6, 1.0
+        _laneBoundaries = new double[laneCount + 1];
+
+        for (int i = 0; i <= laneCount; i++)
+        {
+            // Each lane is 0.4 wide, starting from -1.0
+            double normalizedEdge = -1.0 + (i * 0.4);
+
+            // Project to screen coordinates at normalizedZ = 0 (hit line)
+            var (screenX, _, _) = projection.Project(normalizedEdge, 0);
+            _laneBoundaries[i] = screenX;
+        }
+
+        Console.WriteLine($"[SkiaGameScreen] Lane boundaries (canvas coords): [{string.Join(", ", _laneBoundaries.Select(b => b.ToString("F0")))}]");
+    }
+
     public async ValueTask DisposeAsync()
     {
-        // Unsubscribe from events
         Engine.StateChanged -= OnEngineStateChanged;
+        Engine.RenderRequested -= OnRenderRequested;
 
         if (_isInitialized)
         {
-            // Stop the game loop but DON'T dispose the engine (it's a singleton)
             await Engine.StopGameLoopAsync();
-
-            // Unbind canvas (it's being destroyed with this component)
-            Engine.UnbindCanvas();
-
             _isInitialized = false;
         }
-
-        // DO NOT call Engine.DisposeAsync() - singleton persists across navigations!
     }
 }

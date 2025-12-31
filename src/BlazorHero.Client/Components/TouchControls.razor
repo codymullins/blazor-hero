@@ -1,0 +1,271 @@
+@inject InputService Input
+@inject DeviceService Device
+@implements IAsyncDisposable
+
+<div id="touch-controls-container" class="touch-overlay">
+    @* Star power button on left edge *@
+    @if (ShowStarPower)
+    {
+        <button class="edge-btn star-power-btn @(StarPowerReady ? "ready" : "") @(StarPowerActive ? "active" : "")"
+                data-action="starpower">
+            <span class="star-icon">&#9733;</span>
+        </button>
+    }
+
+    @* Lane touch zones with subtle highlighting *@
+    <div class="lane-zones">
+        @for (int i = 0; i < LaneCount; i++)
+        {
+            var laneIndex = i;
+            var lane = (Lane)i;
+            var (left, width) = GetLanePosition(i);
+            @if (width > 0)
+            {
+                <div class="lane-zone"
+                     data-lane="@i"
+                     style="left: @(left)px; width: @(width)px; --lane-color: @lane.GetColor(); --lane-rgb: @GetLaneRgb(lane);">
+                </div>
+            }
+            else
+            {
+                @* Fallback: percentage-based positioning when boundaries not yet calculated *@
+                <div class="lane-zone"
+                     data-lane="@i"
+                     style="left: @(i * 100.0 / LaneCount)%; width: @(100.0 / LaneCount)%; --lane-color: @lane.GetColor(); --lane-rgb: @GetLaneRgb(lane);">
+                </div>
+            }
+        }
+    </div>
+
+    @* Pause button on right edge *@
+    <button class="edge-btn pause-btn" data-action="pause">
+        <span class="pause-icon">&#10074;&#10074;</span>
+    </button>
+</div>
+
+<style>
+    .touch-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 45%;
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        z-index: 100;
+    }
+
+    .lane-zones {
+        position: absolute;
+        inset: 0;
+        pointer-events: auto;
+    }
+
+    .lane-zone {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: linear-gradient(to top,
+            rgba(var(--lane-rgb), 0.2) 0%,
+            rgba(var(--lane-rgb), 0.08) 40%,
+            transparent 100%);
+        border-left: 1px solid rgba(var(--lane-rgb), 0.25);
+        border-right: 1px solid rgba(var(--lane-rgb), 0.15);
+        transition: background 0.1s;
+    }
+
+    .lane-zone:first-child {
+        border-left: none;
+    }
+
+    .lane-zone:last-child {
+        border-right: none;
+    }
+
+    .lane-zone.pressed {
+        background: linear-gradient(to top,
+            rgba(var(--lane-rgb), 0.5) 0%,
+            rgba(var(--lane-rgb), 0.25) 40%,
+            rgba(var(--lane-rgb), 0.05) 100%);
+    }
+
+    /* Edge buttons */
+    .edge-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 48px;
+        height: 72px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.1s;
+        color: white;
+        z-index: 10;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    .edge-btn.pressed,
+    .edge-btn:active {
+        transform: translateY(-50%) scale(0.95);
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .star-power-btn {
+        left: 8px;
+        border-color: rgba(96, 165, 250, 0.6);
+        background: rgba(96, 165, 250, 0.15);
+    }
+
+    .star-power-btn.ready {
+        border-color: #60A5FA;
+        background: rgba(96, 165, 250, 0.35);
+        animation: starpower-pulse 1s ease-in-out infinite;
+    }
+
+    .star-power-btn.active {
+        border-color: #93C5FD;
+        background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+        animation: starpower-glow 0.5s ease-in-out infinite alternate;
+    }
+
+    .star-icon {
+        font-size: 1.4rem;
+    }
+
+    .star-power-btn.ready .star-icon,
+    .star-power-btn.active .star-icon {
+        color: #60A5FA;
+        text-shadow: 0 0 10px rgba(96, 165, 250, 0.8);
+    }
+
+    .star-power-btn.active .star-icon {
+        color: white;
+    }
+
+    .pause-btn {
+        right: 8px;
+    }
+
+    .pause-icon {
+        font-size: 1rem;
+        letter-spacing: 2px;
+    }
+
+    @@keyframes starpower-pulse {
+        0%, 100% { box-shadow: 0 0 8px rgba(96, 165, 250, 0.4); }
+        50% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.7); }
+    }
+
+    @@keyframes starpower-glow {
+        from { box-shadow: 0 0 12px rgba(96, 165, 250, 0.5); }
+        to { box-shadow: 0 0 30px rgba(96, 165, 250, 0.9); }
+    }
+
+    /* Smaller screens - adjust button size */
+    @@media (max-width: 500px) {
+        .edge-btn {
+            width: 42px;
+            height: 60px;
+        }
+
+        .star-icon {
+            font-size: 1.2rem;
+        }
+
+        .pause-icon {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int LaneCount { get; set; } = 4;
+
+    [Parameter]
+    public bool ShowStarPower { get; set; } = true;
+
+    [Parameter]
+    public bool StarPowerReady { get; set; }
+
+    [Parameter]
+    public bool StarPowerActive { get; set; }
+
+    /// <summary>
+    /// Lane boundaries at hit line (bottom of overlay). Length should be LaneCount + 1.
+    /// </summary>
+    [Parameter]
+    public double[] LaneBoundaries { get; set; } = Array.Empty<double>();
+
+    /// <summary>
+    /// Lane boundaries at top of overlay for perspective effect (unused for now).
+    /// </summary>
+    [Parameter]
+    public double[] LaneBoundariesTop { get; set; } = Array.Empty<double>();
+
+    private bool _isRegistered;
+
+    /// <summary>
+    /// Get lane position from boundaries. Returns (0, 0) if boundaries not yet available.
+    /// </summary>
+    private (double left, double width) GetLanePosition(int laneIndex)
+    {
+        if (LaneBoundaries == null || LaneBoundaries.Length < laneIndex + 2)
+        {
+            // Return 0,0 to signal template to use percentage fallback
+            return (0, 0);
+        }
+
+        double left = LaneBoundaries[laneIndex];
+        double right = LaneBoundaries[laneIndex + 1];
+        return (left, right - left);
+    }
+
+    private string GetLaneRgb(Lane lane)
+    {
+        return lane switch
+        {
+            Lane.Green => "34, 197, 94",
+            Lane.Red => "239, 68, 68",
+            Lane.Yellow => "234, 179, 8",
+            Lane.Blue => "59, 130, 246",
+            Lane.Orange => "249, 115, 22",
+            _ => "255, 255, 255"
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isRegistered)
+        {
+            await Input.RegisterTouchControlsAsync("touch-controls-container");
+            _isRegistered = true;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Update lane boundaries in JS when they change
+        if (_isRegistered && LaneBoundaries.Length > 0)
+        {
+            await Input.SetLaneBoundariesAsync(LaneBoundaries);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_isRegistered)
+        {
+            await Input.UnregisterTouchControlsAsync();
+            _isRegistered = false;
+        }
+    }
+}

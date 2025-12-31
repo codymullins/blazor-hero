@@ -48,23 +48,25 @@ public class GameEngine : IAsyncDisposable
     private const double COUNTDOWN_DURATION = 3000;  // 3 second countdown
 
     // Note travel time varies by difficulty (ms from spawn to hit line)
-    // Difficulty comes primarily from note density and lane count, not speed
+    // Difficulty comes primarily from note density, not speed
     private double NoteTravelTime => _state.SelectedDifficulty switch
     {
-        Difficulty.Easy => 3000,    // Most forgiving pace, 2 lanes
-        Difficulty.Medium => 2800,  // Comfortable pace, 3 lanes
-        Difficulty.Hard => 2800,    // Same speed as Medium, 4 lanes
-        Difficulty.Expert => 2800,  // Same speed as Hard, 5 lanes
+        Difficulty.VeryEasy => 3500,  // Slowest pace, 2 lanes
+        Difficulty.Easy => 3200,      // Slow pace, 3 lanes
+        Difficulty.Medium => 3200,    // Same speed as Easy, 4 lanes
+        Difficulty.Hard => 2800,      // Faster pace, 4 lanes
+        Difficulty.Expert => 2800,    // Same speed as Hard, 5 lanes
         _ => 2800
     };
 
     // Lane count varies by difficulty (must match chart data)
     public int LaneCount => _state.SelectedDifficulty switch
     {
-        Difficulty.Easy => 2,     // Green, Red
-        Difficulty.Medium => 3,   // Green, Red, Yellow
-        Difficulty.Hard => 4,     // Green, Red, Yellow, Blue
-        Difficulty.Expert => 5,   // Green, Red, Yellow, Blue, Orange
+        Difficulty.VeryEasy => 2,   // Green, Red
+        Difficulty.Easy => 3,       // Green, Red, Yellow
+        Difficulty.Medium => 4,     // Green, Red, Yellow, Blue
+        Difficulty.Hard => 4,       // Green, Red, Yellow, Blue
+        Difficulty.Expert => 5,     // Green, Red, Yellow, Blue, Orange
         _ => 4
     };
 
@@ -80,6 +82,7 @@ public class GameEngine : IAsyncDisposable
     public GameStateType CurrentState => _state.Current;
     public SongMeta? CurrentSongMeta => _currentChart?.Meta;
     public PlayerStats? LastStats { get; private set; }
+    public PerspectiveCamera Camera => _camera;
 
     public GameEngine(
         IJSRuntime js,
@@ -302,6 +305,14 @@ public class GameEngine : IAsyncDisposable
     private void UpdateCountdown(double deltaMs)
     {
         _countdownTime -= deltaMs;
+
+        // During countdown, calculate virtual song position (negative, approaching 0)
+        // This allows notes to spawn and travel toward the hit line before the song starts
+        _songPosition = -_countdownTime;
+
+        // Spawn and update notes during countdown so they're visible
+        SpawnUpcomingNotes();
+        UpdateNotes();
 
         if (_countdownTime <= 0)
         {
@@ -558,6 +569,7 @@ public class GameEngine : IAsyncDisposable
         switch (key)
         {
             case "pause":
+            case "escape": // Both ESC key and pause button trigger this
                 if (_state.CanPause)
                 {
                     _ = PauseGame();

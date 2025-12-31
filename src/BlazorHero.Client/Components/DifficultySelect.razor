@@ -1,15 +1,27 @@
 @inject ChartService Charts
+@inject DeviceService Device
 
-<div class="difficulty-select">
+<div class="difficulty-select @(Device.IsMobile ? "mobile" : "")">
     <header class="screen-header">
         <button class="back-btn" @onclick="OnBackClick">
-            <span class="key-hint">ESC</span> Back
+            @if (!Device.IsMobile)
+            {
+                <span class="key-hint">ESC</span>
+            }
+            <span>Back</span>
         </button>
         <h2>SELECT DIFFICULTY</h2>
-        <div class="nav-hint">
-            <span class="key">↑</span><span class="key">↓</span> Navigate
-            <span class="key">ENTER</span> Play
-        </div>
+        @if (!Device.IsMobile)
+        {
+            <div class="nav-hint">
+                <span class="key">@('\u2191')</span><span class="key">@('\u2193')</span> Navigate
+                <span class="key">ENTER</span> Play
+            </div>
+        }
+        else
+        {
+            <div class="spacer"></div>
+        }
     </header>
 
     @if (_chart != null)
@@ -20,13 +32,16 @@
         </div>
 
         <div class="difficulty-options">
-            @foreach (var diff in _availableDifficulties)
+            @foreach (var diff in GetFilteredDifficulties())
             {
                 <button class="diff-btn @diff.ToString().ToLower() @(_selectedDifficulty == diff ? "selected" : "")"
                         @onclick="() => SelectDifficulty(diff)">
                     <span class="diff-name">@diff</span>
-                    <span class="diff-notes">@GetNoteCount(diff) notes</span>
-                    @if (_selectedDifficulty == diff)
+                    <span class="diff-info">
+                        <span class="diff-notes">@GetNoteCount(diff) notes</span>
+                        <span class="diff-lanes">@GetLaneCount(diff) lanes</span>
+                    </span>
+                    @if (_selectedDifficulty == diff && !Device.IsMobile)
                     {
                         <span class="key-hint">ENTER</span>
                     }
@@ -40,6 +55,7 @@
     .difficulty-select {
         width: 100%;
         height: 100vh;
+        height: 100dvh;
         background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
         display: flex;
         flex-direction: column;
@@ -62,7 +78,7 @@
         margin: 0;
     }
 
-    .back-btn, .nav-hint {
+    .back-btn, .nav-hint, .spacer {
         min-width: 150px;
     }
 
@@ -79,7 +95,8 @@
         gap: 0.5rem;
     }
 
-    .back-btn:hover {
+    .back-btn:hover,
+    .back-btn:active {
         background: rgba(255, 255, 255, 0.1);
     }
 
@@ -150,7 +167,8 @@
         position: relative;
     }
 
-    .diff-btn:hover {
+    .diff-btn:hover,
+    .diff-btn:active {
         transform: scale(1.02);
         box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     }
@@ -163,7 +181,7 @@
     }
 
     .diff-btn.selected::before {
-        content: '▶';
+        content: '\25B6';
         position: absolute;
         left: -28px;
         top: 50%;
@@ -176,6 +194,10 @@
     @@keyframes pulse-arrow {
         0%, 100% { opacity: 1; transform: translateY(-50%) translateX(0); }
         50% { opacity: 0.7; transform: translateY(-50%) translateX(3px); }
+    }
+
+    .diff-btn.veryeasy {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
     }
 
     .diff-btn.easy {
@@ -199,10 +221,90 @@
         text-transform: uppercase;
     }
 
+    .diff-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.1rem;
+    }
+
     .diff-notes {
         font-size: 0.9rem;
         font-weight: normal;
         opacity: 0.8;
+    }
+
+    .diff-lanes {
+        font-size: 0.75rem;
+        font-weight: normal;
+        opacity: 0.7;
+    }
+
+    /* Mobile responsive styles */
+    @@media (max-width: 768px) {
+        .difficulty-select {
+            padding: 1rem;
+        }
+
+        .screen-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .screen-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .back-btn, .nav-hint, .spacer {
+            min-width: 80px;
+        }
+
+        .song-preview {
+            margin-bottom: 2rem;
+        }
+
+        .song-preview h3 {
+            font-size: 1.4rem;
+        }
+
+        .diff-btn {
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .difficulty-select {
+            padding: 0.75rem;
+        }
+
+        .screen-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .song-preview h3 {
+            font-size: 1.2rem;
+        }
+
+        .diff-btn {
+            padding: 0.9rem 1.2rem;
+        }
+
+        .diff-btn.selected {
+            transform: scale(1.02);
+        }
+
+        .diff-btn.selected::before {
+            display: none;
+        }
+    }
+
+    /* Mobile class enhancements */
+    .difficulty-select.mobile .diff-btn.selected {
+        transform: scale(1.02);
+    }
+
+    .difficulty-select.mobile .diff-btn.selected::before {
+        display: none;
     }
 </style>
 
@@ -225,13 +327,39 @@
         if (!string.IsNullOrEmpty(ChartFile))
         {
             _chart = await Charts.LoadChartAsync(ChartFile);
-            _availableDifficulties = _chart?.GetAvailableDifficulties() ?? new List<Difficulty>();
+            _availableDifficulties = GetFilteredDifficulties();
             // Auto-select first difficulty
             if (_availableDifficulties.Count > 0)
             {
                 _selectedDifficulty = _availableDifficulties[0];
             }
         }
+    }
+
+    private List<Difficulty> GetFilteredDifficulties()
+    {
+        var difficulties = _chart?.GetAvailableDifficulties() ?? new List<Difficulty>();
+        
+        // On mobile, filter out Expert (5 lanes)
+        if (Device.IsMobile)
+        {
+            difficulties = difficulties.Where(d => d != Difficulty.Expert).ToList();
+        }
+
+        return difficulties;
+    }
+
+    private int GetLaneCount(Difficulty difficulty)
+    {
+        return difficulty switch
+        {
+            Difficulty.VeryEasy => 2,
+            Difficulty.Easy => 3,
+            Difficulty.Medium => 4,
+            Difficulty.Hard => 4,
+            Difficulty.Expert => 5,
+            _ => 4
+        };
     }
 
     private int GetNoteCount(Difficulty difficulty)

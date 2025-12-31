@@ -2,13 +2,13 @@ namespace BlazorHero.Client.Rendering;
 
 /// <summary>
 /// Handles 3D perspective projection for the highway.
-/// Notes spawn at the horizon (far away) and move toward the hit line at the bottom.
+/// Extracted from PerspectiveCamera for use with Tilecraft's rendering system.
 /// </summary>
-public class PerspectiveCamera
+public class PerspectiveProjection
 {
     // Highway dimensions in world space
-    public double HighwayLength { get; } = 1000;
-    public double HighwayWidth { get; private set; } = 580;  // Adjustable for portrait mode
+    public double HighwayLength { get; set; } = 1000;
+    public double HighwayWidth { get; set; } = 580;
 
     // Canvas dimensions
     public double CanvasWidth { get; private set; } = 800;
@@ -18,7 +18,7 @@ public class PerspectiveCamera
     public double HorizonY { get; private set; } = 100;
     public double HitLineY { get; private set; } = 550;
     public double VanishingPointX { get; private set; }
-    public double FocalLength { get; set; } = 480;  // Controls perspective intensity
+    public double FocalLength { get; set; } = 480;
 
     // Highway narrowing at horizon
     public double HorizonWidthRatio { get; } = 0.25;
@@ -33,7 +33,7 @@ public class PerspectiveCamera
         VanishingPointX = canvasWidth / 2;
 
         bool isPortrait = canvasHeight > canvasWidth;
-        Console.WriteLine($"[PerspectiveCamera] Initialize({canvasWidth}, {canvasHeight}) isPortrait={isPortrait}");
+        Console.WriteLine($"[PerspectiveProjection] Initialize({canvasWidth}, {canvasHeight}) isPortrait={isPortrait}");
 
         if (isPortrait)
         {
@@ -43,7 +43,7 @@ public class PerspectiveCamera
             HitLineY = canvasHeight - 55;       // Leave room for lane buttons below
             HorizonY = canvasHeight * 0.03;     // Start near top
             FocalLength = 800;                  // Minimal perspective narrowing
-            Console.WriteLine($"[PerspectiveCamera] PORTRAIT: HighwayWidth={HighwayWidth}, HorizonY={HorizonY}, HitLineY={HitLineY}");
+            Console.WriteLine($"[PerspectiveProjection] PORTRAIT: HighwayWidth={HighwayWidth}, HorizonY={HorizonY}, HitLineY={HitLineY}");
         }
         else
         {
@@ -52,13 +52,12 @@ public class PerspectiveCamera
             HitLineY = canvasHeight - 60;
             HorizonY = canvasHeight * 0.12;
             FocalLength = 480;
-            Console.WriteLine($"[PerspectiveCamera] LANDSCAPE: HighwayWidth={HighwayWidth}, HorizonY={HorizonY}, HitLineY={HitLineY}");
+            Console.WriteLine($"[PerspectiveProjection] LANDSCAPE: HighwayWidth={HighwayWidth}, HorizonY={HorizonY}, HitLineY={HitLineY}");
         }
     }
 
     /// <summary>
     /// Projects a 3D position to 2D screen coordinates.
-    /// Uses linear interpolation for X so notes travel in straight lines matching lane dividers.
     /// </summary>
     /// <param name="laneX">Normalized lane position (-1 to 1, where 0 is center)</param>
     /// <param name="normalizedZ">Depth (0 = hit line, 1 = horizon)</param>
@@ -67,19 +66,16 @@ public class PerspectiveCamera
     {
         normalizedZ = Math.Clamp(normalizedZ, 0, 1);
 
-        // Apply subtle perspective curve - notes gradually accelerate as they approach
-        // (exponent closer to 1.0 = more subtle, closer to 0.5 = more dramatic)
+        // Apply subtle perspective curve
         double perspectiveZ = Math.Pow(normalizedZ, 0.9);
 
         // Y position with perspective feel
         double y = HitLineY - (HitLineY - HorizonY) * perspectiveZ;
 
-        // Perspective scale for object sizing (objects shrink toward horizon)
-        // Uses perspectiveZ so scale matches visual Y position
+        // Perspective scale for object sizing
         double perspectiveScale = FocalLength / (FocalLength + perspectiveZ * HighwayLength);
 
         // X position uses LINEAR interpolation so notes travel in straight lines
-        // This ensures notes stay aligned with lane dividers throughout their journey
         double horizonScale = FocalLength / (FocalLength + HighwayLength);
         double linearScale = 1.0 - (1.0 - horizonScale) * normalizedZ;
         double halfWidth = (HighwayWidth / 2) * linearScale;
@@ -89,56 +85,23 @@ public class PerspectiveCamera
     }
 
     /// <summary>
-    /// Gets the screen X position for a specific lane at a given depth.
-    /// </summary>
-    public double GetLaneX(int laneIndex, double normalizedZ)
-    {
-        double laneOffset = GetLaneOffset(laneIndex);
-        var (x, _, _) = Project(laneOffset, normalizedZ);
-        return x;
-    }
-
-    /// <summary>
     /// Gets the normalized X offset for a lane center (-1 to 1 range).
     /// Always uses fixed 5-lane layout regardless of difficulty.
     /// </summary>
     public double GetLaneOffset(int laneIndex)
     {
-        // Fixed 5-lane layout: positions at -0.8, -0.4, 0, 0.4, 0.8
         return (laneIndex - 2) / 2.5;
     }
 
     /// <summary>
     /// Gets the width of a single lane at a given depth in screen pixels.
-    /// Always uses fixed 5-lane layout.
     /// </summary>
     public double GetLaneWidth(double normalizedZ)
     {
-        // Use the same linear scale as Project() for consistency
         double horizonScale = FocalLength / (FocalLength + HighwayLength);
         double linearScale = 1.0 - (1.0 - horizonScale) * normalizedZ;
-        
-        // Fixed 5-lane width (each lane = 2/5 = 0.4 in normalized space)
         double laneNormalizedWidth = 0.4;
         return (HighwayWidth / 2) * laneNormalizedWidth * linearScale;
-    }
-
-    /// <summary>
-    /// Gets the width of a note at a given depth.
-    /// </summary>
-    public double GetNoteWidth(double normalizedZ, double baseWidth = 70)
-    {
-        var (_, _, scale) = Project(0, normalizedZ);
-        return baseWidth * scale;
-    }
-
-    /// <summary>
-    /// Gets the height of a note at a given depth.
-    /// </summary>
-    public double GetNoteHeight(double normalizedZ, double baseHeight = 22)
-    {
-        var (_, _, scale) = Project(0, normalizedZ);
-        return baseHeight * scale;
     }
 
     /// <summary>
@@ -152,16 +115,11 @@ public class PerspectiveCamera
     }
 
     /// <summary>
-    /// Converts a time offset (in ms) to a normalized Z position.
-    /// Uses a gentle ease-out curve so notes move slightly slower near the horizon,
-    /// counteracting perspective compression for more uniform perceived speed.
+    /// Converts a time offset to a normalized Z position.
     /// </summary>
-    /// <param name="timeUntilHit">Time in ms until the note reaches the hit line</param>
-    /// <param name="noteTravelTime">Total time for a note to travel from horizon to hit line</param>
     public double TimeToNormalizedZ(double timeUntilHit, double noteTravelTime = 2000)
     {
         double t = Math.Clamp(timeUntilHit / noteTravelTime, 0, 1);
-        // Gentle ease-out: 0.8 is subtle, avoids jarring "snap" at hit line
         return Math.Pow(t, 0.8);
     }
 }

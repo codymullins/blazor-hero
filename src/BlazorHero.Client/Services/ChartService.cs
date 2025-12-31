@@ -37,11 +37,20 @@ public class ChartService
                     var chart = await LoadChartAsync(entry.ChartFile);
                     if (chart != null)
                     {
+                        var difficulties = chart.GetAvailableDifficulties();
+                        var noteCounts = new Dictionary<Difficulty, int>();
+                        foreach (var diff in difficulties)
+                        {
+                            var track = chart.GetTrack(diff);
+                            noteCounts[diff] = track?.Notes.Count ?? 0;
+                        }
+
                         _songList.Add(new SongInfo
                         {
                             ChartFile = entry.ChartFile,
                             Meta = chart.Meta,
-                            AvailableDifficulties = chart.GetAvailableDifficulties()
+                            AvailableDifficulties = difficulties,
+                            NoteCounts = noteCounts
                         });
                     }
                 }

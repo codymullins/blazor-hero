@@ -21,7 +21,7 @@ public class GameState
 
     // Selected song and difficulty for current session
     public string? SelectedChartFile { get; set; }
-    public Difficulty SelectedDifficulty { get; set; } = Difficulty.Medium;
+    public Difficulty SelectedDifficulty { get; set; } = Difficulty.Easy;
 
     public void TransitionTo(GameStateType newState)
     {
@@ -39,12 +39,13 @@ public class GameState
     public void Reset()
     {
         SelectedChartFile = null;
-        SelectedDifficulty = Difficulty.Medium;
+        SelectedDifficulty = Difficulty.Easy;
     }
 }
 
 public enum Difficulty
 {
+    VeryEasy,
     Easy,
     Medium,
     Hard,

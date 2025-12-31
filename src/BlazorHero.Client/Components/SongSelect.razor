@@ -1,79 +1,111 @@
 @inject ChartService Charts
 @inject AudioService Audio
+@inject DeviceService Device
 
-<div class="song-select">
+<div class="song-select @(Device.IsMobile ? "mobile" : "")">
     <header class="screen-header">
         <button class="back-btn" @onclick="OnBackClick">
-            <span class="key-hint">ESC</span> Back
+            @if (!Device.IsMobile)
+            {
+                <span class="key-hint">ESC</span>
+            }
+            <span>Back</span>
         </button>
         <h2>SELECT A SONG</h2>
-        <div class="nav-hint">
-            <span class="key">↑</span><span class="key">↓</span> Navigate
-            <span class="key">ENTER</span> Select
-        </div>
-    </header>
-
-    <div class="song-list">
-        @if (_isLoading)
+        @if (!Device.IsMobile)
         {
-            <div class="loading">Loading songs...</div>
-        }
-        else if (_songs.Count == 0)
-        {
-            <div class="no-songs">
-                <p>No songs found!</p>
-                <p class="hint">Add chart files to wwwroot/charts/</p>
+            <div class="nav-hint">
+                <span class="key">@('\u2191')</span><span class="key">@('\u2193')</span> Navigate
+                <span class="key">@('\u2190')</span><span class="key">@('\u2192')</span> Difficulty
+                <span class="key">ENTER</span> Play
             </div>
         }
         else
         {
-            @foreach (var song in _songs)
+            <div class="spacer"></div>
+        }
+    </header>
+
+    <div class="main-content">
+        <div class="song-list">
+            @if (_isLoading)
             {
-                <div class="song-card @(_selectedSong == song ? "selected" : "")"
-                     @onclick="() => SelectSong(song)">
-                    <div class="song-cover">
-                        @if (!string.IsNullOrEmpty(song.Meta.CoverImage))
-                        {
-                            <img src="@song.Meta.CoverImage" alt="@song.Meta.Title" />
-                        }
-                        else
-                        {
-                            <div class="cover-placeholder">&#9835;</div>
-                        }
-                    </div>
-                    <div class="song-info">
-                        <h3 class="song-title">@song.Meta.Title</h3>
-                        <p class="song-artist">@song.Meta.Artist</p>
-                        <div class="song-meta">
-                            <span class="bpm">@song.Meta.Bpm BPM</span>
-                        </div>
-                        <div class="difficulties">
-                            @foreach (var diff in song.AvailableDifficulties)
-                            {
-                                <span class="diff-badge @diff.ToString().ToLower()">@diff</span>
-                            }
-                        </div>
-                    </div>
+                <div class="loading">Loading songs...</div>
+            }
+            else if (_songs.Count == 0)
+            {
+                <div class="no-songs">
+                    <p>No songs found!</p>
+                    <p class="hint">Add chart files to wwwroot/charts/</p>
                 </div>
             }
+            else
+            {
+                @foreach (var song in _songs)
+                {
+                    <div class="song-card @(_selectedSong == song ? "selected" : "")"
+                         @onclick="() => SelectSong(song)">
+                        <div class="song-cover">
+                            @if (!string.IsNullOrEmpty(song.Meta.CoverImage))
+                            {
+                                <img src="@song.Meta.CoverImage" alt="@song.Meta.Title" />
+                            }
+                            else
+                            {
+                                <div class="cover-placeholder">&#9835;</div>
+                            }
+                        </div>
+                        <div class="song-info">
+                            <h3 class="song-title">@song.Meta.Title</h3>
+                            <p class="song-artist">@song.Meta.Artist</p>
+                            <div class="song-meta">
+                                <span class="bpm">@song.Meta.Bpm BPM</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        @if (_selectedSong != null)
+        {
+            <div class="difficulty-panel">
+                <div class="panel-header">
+                    <h3>@_selectedSong.Meta.Title</h3>
+                    <p>@_selectedSong.Meta.Artist</p>
+                </div>
+                
+                <div class="difficulty-options">
+                    @foreach (var diff in GetFilteredDifficulties())
+                    {
+                        <button class="diff-btn @diff.ToString().ToLower() @(_selectedDifficulty == diff ? "selected" : "")"
+                                @onclick="() => SelectDifficulty(diff)">
+                            <span class="diff-name">@diff</span>
+                            <span class="diff-info">
+                                <span class="diff-notes">@GetNoteCount(diff) notes</span>
+                                <span class="diff-lanes">@GetLaneCount(diff) lanes</span>
+                            </span>
+                        </button>
+                    }
+                </div>
+
+                <button class="play-btn" @onclick="ConfirmSelection">
+                    PLAY
+                    @if (!Device.IsMobile)
+                    {
+                        <span class="key-hint">ENTER</span>
+                    }
+                </button>
+            </div>
         }
     </div>
-
-    @if (_selectedSong != null)
-    {
-        <div class="song-actions">
-            <button class="play-btn" @onclick="ConfirmSelection">
-                SELECT DIFFICULTY
-                <span class="key-hint">ENTER</span>
-            </button>
-        </div>
-    }
 </div>
 
 <style>
     .song-select {
         width: 100%;
         height: 100vh;
+        height: 100dvh;
         background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
         display: flex;
         flex-direction: column;
@@ -94,11 +126,8 @@
         margin: 0;
     }
 
-    .back-btn, .nav-hint {
-        min-width: 150px;
-    }
-
     .back-btn {
+        min-width: 100px;
         background: transparent;
         border: 1px solid rgba(255, 255, 255, 0.3);
         color: white;
@@ -111,7 +140,8 @@
         gap: 0.5rem;
     }
 
-    .back-btn:hover {
+    .back-btn:hover,
+    .back-btn:active {
         background: rgba(255, 255, 255, 0.1);
     }
 
@@ -120,8 +150,13 @@
         align-items: center;
         gap: 0.3rem;
         color: rgba(255, 255, 255, 0.5);
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         justify-content: flex-end;
+        min-width: 100px;
+    }
+
+    .spacer {
+        min-width: 100px;
     }
 
     .key {
@@ -131,7 +166,7 @@
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 3px;
         font-family: monospace;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     .key-hint {
@@ -142,13 +177,23 @@
         font-family: monospace;
     }
 
+    .main-content {
+        flex: 1;
+        display: flex;
+        gap: 2rem;
+        overflow: hidden;
+    }
+
     .song-list {
         flex: 1;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
         padding-right: 0.5rem;
+        padding-left: 1.5rem;
+        /* Better touch scrolling */
+        -webkit-overflow-scrolling: touch;
     }
 
     .loading, .no-songs {
@@ -166,7 +211,7 @@
     .song-card {
         display: flex;
         gap: 1rem;
-        padding: 1rem;
+        padding: 0.75rem;
         background: rgba(255, 255, 255, 0.05);
         border: 2px solid rgba(255, 255, 255, 0.1);
         border-radius: 8px;
@@ -175,7 +220,8 @@
         position: relative;
     }
 
-    .song-card:hover {
+    .song-card:hover,
+    .song-card:active {
         background: rgba(255, 255, 255, 0.1);
         border-color: rgba(255, 255, 255, 0.2);
     }
@@ -184,18 +230,16 @@
         background: rgba(255, 215, 0, 0.15);
         border-color: #FFD700;
         box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 30px rgba(255, 215, 0, 0.05);
-        transform: translateX(8px);
-        animation: selected-glow 1.5s ease-in-out infinite;
     }
 
     .song-card.selected::before {
-        content: '▶';
+        content: '\25B6';
         position: absolute;
-        left: -24px;
+        left: -20px;
         top: 50%;
         transform: translateY(-50%);
         color: #FFD700;
-        font-size: 1rem;
+        font-size: 0.9rem;
         animation: pulse-arrow 1s ease-in-out infinite;
     }
 
@@ -204,14 +248,9 @@
         50% { opacity: 0.7; transform: translateY(-50%) translateX(3px); }
     }
 
-    @@keyframes selected-glow {
-        0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 30px rgba(255, 215, 0, 0.05); }
-        50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), inset 0 0 40px rgba(255, 215, 0, 0.1); }
-    }
-
     .song-cover {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         border-radius: 4px;
         overflow: hidden;
         background: rgba(0, 0, 0, 0.3);
@@ -230,7 +269,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 1.5rem;
         color: rgba(255, 255, 255, 0.3);
     }
 
@@ -243,61 +282,146 @@
 
     .song-title {
         color: white;
-        font-size: 1.2rem;
-        margin: 0 0 0.25rem 0;
+        font-size: 1.1rem;
+        margin: 0 0 0.2rem 0;
     }
 
     .song-artist {
         color: rgba(255, 255, 255, 0.6);
-        margin: 0 0 0.5rem 0;
+        margin: 0;
+        font-size: 0.9rem;
     }
 
     .song-meta {
         color: rgba(255, 255, 255, 0.5);
-        font-size: 0.85rem;
-        margin-bottom: 0.5rem;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
     }
 
-    .difficulties {
+    /* Difficulty Panel */
+    .difficulty-panel {
+        width: 320px;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 215, 0, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
         display: flex;
-        gap: 0.5rem;
+        flex-direction: column;
+        animation: slide-in 0.3s ease-out;
     }
 
-    .diff-badge {
-        padding: 0.2rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
+    @@keyframes slide-in {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .panel-header {
+        text-align: center;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .panel-header h3 {
+        color: #FFD700;
+        font-size: 1.4rem;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .panel-header p {
+        color: rgba(255, 255, 255, 0.6);
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .difficulty-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .diff-btn {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        font-size: 1rem;
         font-weight: bold;
-        text-transform: uppercase;
-    }
-
-    .diff-badge.easy {
-        background: #22C55E;
+        cursor: pointer;
+        transition: all 0.2s;
         color: white;
+        position: relative;
     }
 
-    .diff-badge.medium {
-        background: #EAB308;
+    .diff-btn:hover,
+    .diff-btn:active {
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .diff-btn.selected {
+        transform: scale(1.05);
+        box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+        outline: 3px solid white;
+        outline-offset: 2px;
+    }
+
+    .diff-btn.veryeasy {
+        background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+    }
+
+    .diff-btn.easy {
+        background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    }
+
+    .diff-btn.medium {
+        background: linear-gradient(135deg, #EAB308 0%, #CA8A04 100%);
         color: black;
     }
 
-    .diff-badge.hard {
-        background: #F97316;
-        color: white;
+    .diff-btn.hard {
+        background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
     }
 
-    .diff-badge.expert {
-        background: #EF4444;
-        color: white;
+    .diff-btn.expert {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
     }
 
-    .song-actions {
-        padding-top: 1rem;
+    .diff-name {
+        text-transform: uppercase;
+    }
+
+    .diff-info {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.1rem;
+    }
+
+    .diff-notes {
+        font-size: 0.85rem;
+        font-weight: normal;
+        opacity: 0.8;
+    }
+
+    .diff-lanes {
+        font-size: 0.75rem;
+        font-weight: normal;
+        opacity: 0.7;
     }
 
     .play-btn {
+        margin-top: 1.5rem;
         background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
         border: none;
         color: black;
@@ -307,23 +431,135 @@
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
     }
 
-    .play-btn:hover {
+    .play-btn:hover,
+    .play-btn:active {
         transform: scale(1.05);
         box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+    }
+
+    /* Mobile responsive styles */
+    @@media (max-width: 900px) {
+        .main-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .song-list {
+            max-height: 40vh;
+            padding-left: 0.5rem;
+        }
+
+        .difficulty-panel {
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .difficulty-options {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .diff-btn {
+            flex: 1;
+            min-width: calc(50% - 0.375rem);
+            padding: 0.75rem 1rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .song-select {
+            padding: 1rem;
+        }
+
+        .screen-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .song-card {
+            padding: 0.6rem;
+        }
+
+        .song-cover {
+            width: 50px;
+            height: 50px;
+        }
+
+        .song-title {
+            font-size: 1rem;
+        }
+
+        .song-artist {
+            font-size: 0.85rem;
+        }
+
+        .panel-header h3 {
+            font-size: 1.2rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .song-select {
+            padding: 0.75rem;
+        }
+
+        .screen-header {
+            margin-bottom: 1rem;
+        }
+
+        .screen-header h2 {
+            font-size: 1.3rem;
+        }
+
+        .back-btn {
+            min-width: 70px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .song-list {
+            gap: 0.5rem;
+        }
+
+        .diff-btn {
+            min-width: 100%;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+
+        .diff-info {
+            flex-direction: row;
+            gap: 0.5rem;
+            align-items: center;
+        }
+    }
+
+    /* Mobile class enhancements */
+    .song-select.mobile .song-card.selected::before {
+        display: none;
+    }
+
+    .song-select.mobile .song-list {
+        padding-left: 0;
     }
 </style>
 
 @code {
     [Parameter]
-    public EventCallback<string> OnSongSelected { get; set; }
+    public EventCallback<(string ChartFile, Difficulty Difficulty)> OnSongSelected { get; set; }
 
     [Parameter]
     public EventCallback OnBack { get; set; }
 
     private List<SongInfo> _songs = new();
     private SongInfo? _selectedSong;
+    private Difficulty _selectedDifficulty = Difficulty.Easy;
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -334,13 +570,48 @@
         // Auto-select first song for keyboard navigation
         if (_songs.Count > 0)
         {
-            _selectedSong = _songs[0];
+            await SelectSong(_songs[0]);
         }
+    }
+
+    private List<Difficulty> GetFilteredDifficulties()
+    {
+        if (_selectedSong == null) return new List<Difficulty>();
+
+        var difficulties = _selectedSong.AvailableDifficulties;
+        
+        // On mobile, filter out Expert (5 lanes)
+        if (Device.IsMobile)
+        {
+            difficulties = difficulties.Where(d => d != Difficulty.Expert).ToList();
+        }
+
+        return difficulties;
+    }
+
+    private int GetLaneCount(Difficulty difficulty)
+    {
+        return difficulty switch
+        {
+            Difficulty.VeryEasy => 2,
+            Difficulty.Easy => 3,
+            Difficulty.Medium => 4,
+            Difficulty.Hard => 4,
+            Difficulty.Expert => 5,
+            _ => 4
+        };
     }
 
     private async Task SelectSong(SongInfo song)
     {
         _selectedSong = song;
+        
+        // Auto-select first available difficulty (respecting mobile filter)
+        var availableDifficulties = GetFilteredDifficulties();
+        if (availableDifficulties.Count > 0)
+        {
+            _selectedDifficulty = availableDifficulties[0];
+        }
 
         // Play preview (if audio is ready)
         try
@@ -355,12 +626,23 @@
         }
     }
 
+    private void SelectDifficulty(Difficulty difficulty)
+    {
+        _selectedDifficulty = difficulty;
+    }
+
+    private int GetNoteCount(Difficulty difficulty)
+    {
+        // Note count is stored in SongInfo
+        return _selectedSong?.GetNoteCount(difficulty) ?? 0;
+    }
+
     private async Task ConfirmSelection()
     {
         if (_selectedSong != null)
         {
             await Audio.StopSongAsync();
-            await OnSongSelected.InvokeAsync(_selectedSong.ChartFile);
+            await OnSongSelected.InvokeAsync((_selectedSong.ChartFile, _selectedDifficulty));
         }
     }
 
@@ -400,6 +682,32 @@
                     await SelectSong(_songs[0]);
                 }
                 StateHasChanged();
+                break;
+
+            case "left":
+                if (_selectedSong != null)
+                {
+                    var diffs = GetFilteredDifficulties();
+                    int diffIndex = diffs.IndexOf(_selectedDifficulty);
+                    if (diffIndex > 0)
+                    {
+                        _selectedDifficulty = diffs[diffIndex - 1];
+                        StateHasChanged();
+                    }
+                }
+                break;
+
+            case "right":
+                if (_selectedSong != null)
+                {
+                    var diffs = GetFilteredDifficulties();
+                    int diffIndex = diffs.IndexOf(_selectedDifficulty);
+                    if (diffIndex < diffs.Count - 1)
+                    {
+                        _selectedDifficulty = diffs[diffIndex + 1];
+                        StateHasChanged();
+                    }
+                }
                 break;
 
             case "confirm":

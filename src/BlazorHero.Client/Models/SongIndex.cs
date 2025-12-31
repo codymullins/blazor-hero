@@ -20,4 +20,10 @@ public class SongInfo
     public string ChartFile { get; set; } = "";
     public SongMeta Meta { get; set; } = new();
     public List<Difficulty> AvailableDifficulties { get; set; } = new();
+    public Dictionary<Difficulty, int> NoteCounts { get; set; } = new();
+
+    public int GetNoteCount(Difficulty difficulty)
+    {
+        return NoteCounts.TryGetValue(difficulty, out var count) ? count : 0;
+    }
 }

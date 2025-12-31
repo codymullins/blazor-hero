@@ -1,6 +1,7 @@
 @inject GameEngine Engine
 @inject GameState State
 @inject InputService Input
+@inject DeviceService Device
 
 <div class="game-app" @ref="_appElement" tabindex="0">
     @switch (State.Current)
@@ -16,13 +17,6 @@
                 OnSongSelected="OnSongSelected" 
                 OnBack="GoToMainMenu"
                 @ref="_songSelect" />
-            break;
-        case GameStateType.DifficultySelect:
-            <DifficultySelect
-                ChartFile="@_selectedChartFile"
-                OnDifficultySelected="OnDifficultySelected"
-                OnBack="GoToSongSelect"
-                @ref="_difficultySelect" />
             break;
         case GameStateType.Countdown:
         case GameStateType.Playing:
@@ -40,10 +34,8 @@
 </div>
 
 @code {
-    private string? _selectedChartFile;
     private ElementReference _appElement;
     private SongSelect? _songSelect;
-    private DifficultySelect? _difficultySelect;
 
     protected override void OnInitialized()
     {
@@ -57,6 +49,11 @@
         Console.WriteLine($"[App.OnAfterRenderAsync] firstRender={firstRender}, state={State.Current}");
         if (firstRender)
         {
+            // Initialize device detection first (needed for mobile layout decisions)
+            Console.WriteLine("[App.OnAfterRenderAsync] Calling Device.InitializeAsync");
+            await Device.InitializeAsync();
+            Console.WriteLine($"[App.OnAfterRenderAsync] Device initialized: mobile={Device.IsMobile}, touch={Device.HasTouch}");
+
             // Initialize JS modules early (before any game screen needs them)
             Console.WriteLine("[App.OnAfterRenderAsync] Calling InitializeModulesAsync");
             await Engine.InitializeModulesAsync();
@@ -105,22 +102,6 @@
                     }
                     break;
 
-                case GameStateType.DifficultySelect:
-                    if (key == "escape" || key == "back")
-                    {
-                        GoToSongSelect();
-                    }
-                    else if (_difficultySelect != null)
-                    {
-                        Console.WriteLine($"[App] DifficultySelect: Handling key {key}");
-                        await _difficultySelect.HandleKeyAsync(key);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[App] DifficultySelect: _difficultySelect is NULL!");
-                    }
-                    break;
-
                 case GameStateType.Results:
                     if (key == "restart")
                     {
@@ -146,18 +127,9 @@
         Engine.GoToSongSelect();
     }
 
-    private void OnSongSelected(string chartFile)
+    private async Task OnSongSelected((string ChartFile, Difficulty Difficulty) selection)
     {
-        _selectedChartFile = chartFile;
-        State.TransitionTo(GameStateType.DifficultySelect);
-    }
-
-    private async Task OnDifficultySelected(Difficulty difficulty)
-    {
-        if (_selectedChartFile != null)
-        {
-            await Engine.StartSongAsync(_selectedChartFile, difficulty);
-        }
+        await Engine.StartSongAsync(selection.ChartFile, selection.Difficulty);
     }
 
     private async Task RestartSong()

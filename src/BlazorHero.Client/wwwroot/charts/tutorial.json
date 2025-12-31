@@ -27,61 +27,78 @@
     { "time": 0, "bpm": 100, "timeSignature": [4, 4] }
   ],
   "difficulties": {
-    "easy": {
+    "veryeasy": {
       "notes": [
         { "time": 2000, "lane": 0 },
-        { "time": 3200, "lane": 1 },
-        { "time": 4400, "lane": 0, "isStarPower": true },
-        { "time": 5600, "lane": 1, "isStarPower": true },
-        { "time": 6800, "lane": 0, "isStarPower": true },
-        { "time": 8000, "lane": 1 },
-        { "time": 9200, "lane": 0 },
-        { "time": 10400, "lane": 1 },
-        { "time": 11600, "lane": 0 },
-        { "time": 12800, "lane": 1 },
+        { "time": 3500, "lane": 1 },
+        { "time": 5000, "lane": 0, "isStarPower": true },
+        { "time": 6500, "lane": 1, "isStarPower": true },
+        { "time": 8000, "lane": 0, "isStarPower": true },
+        { "time": 9500, "lane": 1 },
+        { "time": 11000, "lane": 0 },
+        { "time": 12500, "lane": 1 },
         { "time": 14000, "lane": 0, "duration": 1500 },
         { "time": 16500, "lane": 1, "duration": 1500 },
         { "time": 19000, "lane": 0, "isStarPower": true },
-        { "time": 20200, "lane": 1, "isStarPower": true },
-        { "time": 21400, "lane": 0, "isStarPower": true },
-        { "time": 22600, "lane": 1, "isStarPower": true }
+        { "time": 20500, "lane": 1, "isStarPower": true },
+        { "time": 22000, "lane": 0, "isStarPower": true }
       ],
       "starPowerPhrases": [
-        { "startTime": 4400, "endTime": 7200 },
-        { "startTime": 19000, "endTime": 23100 }
+        { "startTime": 5000, "endTime": 8500 },
+        { "startTime": 19000, "endTime": 22500 }
+      ]
+    },
+    "easy": {
+      "notes": [
+        { "time": 2000, "lane": 0 },
+        { "time": 3000, "lane": 1 },
+        { "time": 4000, "lane": 2 },
+        { "time": 5000, "lane": 1, "isStarPower": true },
+        { "time": 6000, "lane": 0, "isStarPower": true },
+        { "time": 7000, "lane": 2, "isStarPower": true },
+        { "time": 8000, "lane": 1 },
+        { "time": 9000, "lane": 0 },
+        { "time": 10000, "lane": 2 },
+        { "time": 11000, "lane": 1 },
+        { "time": 12000, "lane": 0, "duration": 1000 },
+        { "time": 14000, "lane": 2, "duration": 1000 },
+        { "time": 16000, "lane": 1, "isStarPower": true },
+        { "time": 17000, "lane": 0, "isStarPower": true },
+        { "time": 18000, "lane": 2, "isStarPower": true },
+        { "time": 19000, "lane": 1, "isStarPower": true }
+      ],
+      "starPowerPhrases": [
+        { "startTime": 5000, "endTime": 7500 },
+        { "startTime": 16000, "endTime": 19500 }
       ]
     },
     "medium": {
       "notes": [
         { "time": 2000, "lane": 0 },
-        { "time": 2600, "lane": 1 },
-        { "time": 3200, "lane": 2, "isStarPower": true },
-        { "time": 3800, "lane": 1, "isStarPower": true },
-        { "time": 4400, "lane": 0, "isStarPower": true },
-        { "time": 5000, "lane": 2, "isStarPower": true },
-        { "time": 5600, "lane": 1 },
-        { "time": 6200, "lane": 0 },
-        { "time": 6800, "lane": 2 },
-        { "time": 7400, "lane": 1 },
-        { "time": 8000, "lane": 0 },
-        { "time": 8600, "lane": 2 },
-        { "time": 9200, "lane": 1 },
-        { "time": 9800, "lane": 0 },
+        { "time": 2700, "lane": 1 },
+        { "time": 3400, "lane": 2 },
+        { "time": 4100, "lane": 3, "isStarPower": true },
+        { "time": 4800, "lane": 2, "isStarPower": true },
+        { "time": 5500, "lane": 1, "isStarPower": true },
+        { "time": 6200, "lane": 0, "isStarPower": true },
+        { "time": 6900, "lane": 1 },
+        { "time": 7600, "lane": 2 },
+        { "time": 8300, "lane": 3 },
+        { "time": 9000, "lane": 0 },
+        { "time": 9700, "lane": 1 },
         { "time": 10400, "lane": 2 },
-        { "time": 11000, "lane": 1 },
-        { "time": 11600, "lane": 0, "duration": 900 },
-        { "time": 13100, "lane": 2, "duration": 900 },
-        { "time": 14600, "lane": 1, "duration": 900 },
+        { "time": 11100, "lane": 3, "duration": 900 },
+        { "time": 12700, "lane": 0, "duration": 900 },
+        { "time": 14300, "lane": 1 },
+        { "time": 15000, "lane": 2, "isStarPower": true },
+        { "time": 15700, "lane": 3, "isStarPower": true },
         { "time": 16400, "lane": 0, "isStarPower": true },
-        { "time": 17000, "lane": 1, "isStarPower": true },
-        { "time": 17600, "lane": 2, "isStarPower": true },
-        { "time": 18200, "lane": 1, "isStarPower": true },
-        { "time": 18800, "lane": 0, "isStarPower": true },
-        { "time": 19400, "lane": 2, "isStarPower": true }
+        { "time": 17100, "lane": 1, "isStarPower": true },
+        { "time": 17800, "lane": 2, "isStarPower": true }
       ],
       "starPowerPhrases": [
-        { "startTime": 3200, "endTime": 5300 },
-        { "startTime": 16400, "endTime": 19900 }
+        { "startTime": 4100, "endTime": 6700 },
+        { "startTime": 15000, "endTime": 18300 }
       ]
     },
     "hard": {

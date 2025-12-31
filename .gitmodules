@@ -1,0 +1,3 @@
+[submodule "lib/Tilecraft"]
+	path = lib/Tilecraft
+	url = https://github.com/tilecraft/tilecraft.git

@@ -18,5 +18,7 @@ builder.Services.AddSingleton<InputService>();
 builder.Services.AddSingleton<ScoringService>();
 builder.Services.AddSingleton<ChartService>();  // Must be Singleton since GameEngine depends on it
 builder.Services.AddSingleton<GameEngine>();
+builder.Services.AddSingleton<SkiaGameEngine>(); // Skia-based rendering engine
+builder.Services.AddSingleton<DeviceService>(); // Device detection for mobile support
 
 await builder.Build().RunAsync();
