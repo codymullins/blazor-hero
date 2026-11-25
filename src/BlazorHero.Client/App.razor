@@ -1,0 +1,174 @@
+@inject GameEngine Engine
+@inject GameState State
+@inject InputService Input
+
+<div class="game-app" @ref="_appElement" tabindex="0">
+    @switch (State.Current)
+    {
+        case GameStateType.Loading:
+            <LoadingScreen />
+            break;
+        case GameStateType.MainMenu:
+            <MainMenu OnPlay="GoToSongSelect" />
+            break;
+        case GameStateType.SongSelect:
+            <SongSelect 
+                OnSongSelected="OnSongSelected" 
+                OnBack="GoToMainMenu"
+                @ref="_songSelect" />
+            break;
+        case GameStateType.DifficultySelect:
+            <DifficultySelect
+                ChartFile="@_selectedChartFile"
+                OnDifficultySelected="OnDifficultySelected"
+                OnBack="GoToSongSelect"
+                @ref="_difficultySelect" />
+            break;
+        case GameStateType.Countdown:
+        case GameStateType.Playing:
+        case GameStateType.Paused:
+            <GameScreen />
+            break;
+        case GameStateType.Results:
+            <ResultsScreen
+                Stats="@Engine.LastStats"
+                SongMeta="@Engine.CurrentSongMeta"
+                OnRestart="RestartSong"
+                OnBack="GoToSongSelect" />
+            break;
+    }
+</div>
+
+@code {
+    private string? _selectedChartFile;
+    private ElementReference _appElement;
+    private SongSelect? _songSelect;
+    private DifficultySelect? _difficultySelect;
+
+    protected override void OnInitialized()
+    {
+        Engine.StateChanged += OnStateChanged;
+        State.StateChanged += OnGameStateChanged;
+        Input.SpecialKeyPressed += OnSpecialKeyPressed;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Console.WriteLine($"[App.OnAfterRenderAsync] firstRender={firstRender}, state={State.Current}");
+        if (firstRender)
+        {
+            // Initialize JS modules early (before any game screen needs them)
+            Console.WriteLine("[App.OnAfterRenderAsync] Calling InitializeModulesAsync");
+            await Engine.InitializeModulesAsync();
+            Console.WriteLine("[App.OnAfterRenderAsync] InitializeModulesAsync completed");
+        }
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnGameStateChanged(GameStateType from, GameStateType to)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSpecialKeyPressed(string key)
+    {
+        Console.WriteLine($"[App] OnSpecialKeyPressed: {key}, State: {State.Current}");
+        InvokeAsync(async () =>
+        {
+            switch (State.Current)
+            {
+                case GameStateType.MainMenu:
+                    if (key == "confirm")
+                    {
+                        Console.WriteLine("[App] MainMenu: confirm -> GoToSongSelect");
+                        GoToSongSelect();
+                    }
+                    break;
+
+                case GameStateType.SongSelect:
+                    if (key == "escape" || key == "back")
+                    {
+                        GoToMainMenu();
+                    }
+                    else if (_songSelect != null)
+                    {
+                        Console.WriteLine($"[App] SongSelect: Handling key {key}");
+                        await _songSelect.HandleKeyAsync(key);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[App] SongSelect: _songSelect is NULL!");
+                    }
+                    break;
+
+                case GameStateType.DifficultySelect:
+                    if (key == "escape" || key == "back")
+                    {
+                        GoToSongSelect();
+                    }
+                    else if (_difficultySelect != null)
+                    {
+                        Console.WriteLine($"[App] DifficultySelect: Handling key {key}");
+                        await _difficultySelect.HandleKeyAsync(key);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[App] DifficultySelect: _difficultySelect is NULL!");
+                    }
+                    break;
+
+                case GameStateType.Results:
+                    if (key == "restart")
+                    {
+                        await RestartSong();
+                    }
+                    else if (key == "escape" || key == "back")
+                    {
+                        GoToSongSelect();
+                    }
+                    break;
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void GoToMainMenu()
+    {
+        Engine.GoToMainMenu();
+    }
+
+    private void GoToSongSelect()
+    {
+        Engine.GoToSongSelect();
+    }
+
+    private void OnSongSelected(string chartFile)
+    {
+        _selectedChartFile = chartFile;
+        State.TransitionTo(GameStateType.DifficultySelect);
+    }
+
+    private async Task OnDifficultySelected(Difficulty difficulty)
+    {
+        if (_selectedChartFile != null)
+        {
+            await Engine.StartSongAsync(_selectedChartFile, difficulty);
+        }
+    }
+
+    private async Task RestartSong()
+    {
+        await Engine.RestartSong();
+    }
+
+    public void Dispose()
+    {
+        Engine.StateChanged -= OnStateChanged;
+        State.StateChanged -= OnGameStateChanged;
+        Input.SpecialKeyPressed -= OnSpecialKeyPressed;
+    }
+}
